@@ -5,4 +5,20 @@ dotenv.config({
     path: "./env"
 });
 
-connectDB();
+const port = process.env.PORT || 3000 
+
+const start = async ()=>{
+    try {
+        await connectDB()
+        app.on('error',(err)=>{
+            console.log("ERROR: ",err)
+        })
+        app.listen(port,()=>{
+            console.log(`server is connected to port: ${port}`)
+        })
+    } catch (error) {
+       console.log("Some error is occured ",error) 
+    }
+}
+
+start()

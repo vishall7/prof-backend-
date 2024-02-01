@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import connectDB from "./db/connect.js";
+import {app} from "./app.js";
 
 dotenv.config({
     path: "./env"
@@ -17,7 +18,7 @@ const start = async ()=>{
             console.log(`server is connected to port: ${port}`)
         })
     } catch (error) {
-       console.log("Some error is occured ",error) 
+       console.error("Some error is occured ",error) 
     }
 }
 

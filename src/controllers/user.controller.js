@@ -7,16 +7,16 @@ import jwt from "jsonwebtoken";
 
     // generating access and refresh token 
 
-    const generateAccessAndRefreshTokens = async (userId)=>{
-        const user = await User.findById(userId);
-        const accessToken = user.generateAccessToken();
-        const refreshToken = user.generateRefreshToken();
+const generateAccessAndRefreshTokens = async (userId)=>{
+    const user = await User.findById(userId);
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
 
-        user.refreshToken = refreshToken;
-        await user.save({validateBeforeSave: false});
+    user.refreshToken = refreshToken;
+    await user.save({validateBeforeSave: false});
 
-        return {accessToken,refreshToken}
-    }
+    return {accessToken,refreshToken}
+}
 
 const registerUser = asyncHandler(async (req,res)=>{
     //get user data
@@ -204,13 +204,163 @@ const refreshAccessToken = asyncHandler(async(req,res)=>{
 
 })
 
+const changeCurrentPassword = asyncHandler(async (req,res)=>{
 
+// change current password controller
+// user enters old, new, confirm passwords 
+// then checks if its not empty
+// check if old password is correct with user 
+// if yes then compare it with user database stored password
+// if it matches then update the old password with new password
+// send res with user 
 
+    const {oldPassword,newPassword,confirmPassword} = req.body
 
+    if([oldPassword,newPassword,confirmPassword].some((feild) => 
+        feild?.trim() === "")){
+        throw new ApiError(401,"please enter your password"); 
+    }
+    if([oldPassword,newPassword,confirmPassword].some((feild) => 
+        feild?.length < 4)){
+        throw new ApiError(401,"password should be minimum 5 characters"); 
+    }
+
+    const user = await User.findById(req.user?._id);
+
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+
+    if(!isPasswordCorrect){
+        throw new ApiError(401,"you have entered wrong user password");
+    }
+    
+    if((oldPassword === newPassword)){
+        throw new ApiError(401,"you've enter new password same as old password")
+    }
+
+    if(!(newPassword === confirmPassword)){
+        throw new ApiError(401,"please correctly enter your new password for confirmation");
+    }
+
+    user.password = confirmPassword;
+    await user.save({validateBeforeSave: false})
+
+    // const updatedUser = user.select("-refreshToken"); 
+    
+    return res.status(200).json(
+        new ApiResponse(200,{},"password change successfully")
+    )
+
+})
+
+const getCurrentUser = asyncHandler(async (req,res)=>{
+    // const user = req.user;
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,{user: req.user},"heres the current user")
+    )
+})
+
+const updateAccountDetails = asyncHandler(async (req,res)=>{
+    const {fullname, email} = req.body
+    if(!fullname || !email){
+        throw new ApiError(400,"feilds are compulsory for updation");
+    }
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                fullname,
+                email
+            }
+        },
+        {new: true}
+    ).select("-password -refreshToken")
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,{user},"User info updated successfully")
+    ) 
+})
+
+// login user
+// get files from multer
+// upload to cloudnary get image public url
+// replace database avatar url with updated new url 
+
+const updateUserAvatar = asyncHandler(async (req,res)=>{
+
+    const newAvatarPath = req.file?.path;
+
+    if(!newAvatarPath){
+        throw new ApiError(400,"avatar file path not found")
+    }
+
+    const updatedAvatar = await fileUploadTOCloudinary(newAvatarPath);
+
+    if (!updatedAvatar.url) {
+        throw new ApiError(400,"file upload unsuccessful to cloudinary");
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                avatar: updatedAvatar.url
+            }
+        },
+        {new: true}
+    ).select("-password -refreshToken");
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,{user},"avtar updated successfully")
+    )
+
+})
+
+const updateUserCoverImage = asyncHandler(async (req,res)=>{
+
+    const newCoverImagePath = req.file?.path;
+
+    if(!newCoverImagePath){
+        throw new ApiError(400,"cover image file path not found")
+    }
+
+    const updatedCoverImage = await fileUploadTOCloudinary(newCoverImagePath);
+
+    if (!updatedCoverImage.url) {
+        throw new ApiError(400,"file upload unsuccessful to cloudinary");
+    }
+
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                coverImage: updatedCoverImage.url
+            }
+        },
+        {new: true}
+    ).select("-password -refreshToken");
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,{user},"cover image updated successfully")
+    )
+
+})
 
 export {
     registerUser,
     loginUser,
     logoutUser,
-    refreshAccessToken
-}
+    refreshAccessToken,
+    changeCurrentPassword,
+    getCurrentUser,
+    updateAccountDetails,
+    updateUserAvatar,
+    updateUserCoverImage
+}    

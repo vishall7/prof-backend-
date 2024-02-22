@@ -1,5 +1,5 @@
 import { Router } from "express";
-import {registerUser, loginUser, logoutUser,refreshAccessToken,changeCurrentPassword,getCurrentUser,updateAccountDetails,updateUserAvatar,updateUserCoverImage, getUserChannelProfile, getUserWatchHistory} from "../controllers/user.controller.js";
+import {registerUser, loginUser, logoutUser,refreshAccessToken,changeCurrentPassword,getCurrentUser,updateAccountDetails,updateUserAvatar,updateUserCoverImage, getUserChannelProfile, getUserWatchHistory, createTweet, getAllTweets} from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -22,6 +22,8 @@ router.route("/register").post(
 
 router.route("/login").post(loginUser)
 
+router.route("/tweets").get(getAllTweets)
+
 // secured routes
 router.route("/logout").post(verifyJWT,logoutUser)
 router.route("/refresh-token").post(refreshAccessToken)
@@ -42,6 +44,9 @@ router.route("/updateUserCoverImage").patch(
 router.route("/channel/:username").get(verifyJWT,getUserChannelProfile);
 
 router.route("/watch-history").get(verifyJWT,getUserWatchHistory);
+
+router.route("/create-tweet").post(verifyJWT,createTweet)
+
 
 export default router;
 

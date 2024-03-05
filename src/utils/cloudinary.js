@@ -7,13 +7,18 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET 
   });
 
-const fileUploadTOCloudinary = async (localFilePath,publicId) => {
+const fileUploadTOCloudinary = async (localFilePath,tags,publicId) => {
   try {
     if(!localFilePath) return null;
     // Object to store additional options for the upload
     const uploadOptions = {
       resource_type: "auto",
-    }; 
+    };
+    
+    if (tags) {
+      uploadOptions.tags = tags;
+    }
+
     // Add public_id to options if provided
     if (publicId) {
       uploadOptions.public_id = publicId;

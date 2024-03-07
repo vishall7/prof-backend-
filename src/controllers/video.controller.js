@@ -1,10 +1,10 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/APIError.js";
 import { ApiResponse } from "../utils/APIResponse.js";
-import { fileUploadTOCloudinary } from "../utils/cloudinary.js";
+import { fileDeleteToCloudinary, fileUploadTOCloudinary } from "../utils/cloudinary.js";
 import { Video } from "../models/video.model.js";
 import mongoose from "mongoose";
-
+   
 const uploadVideo = asyncHandler(async (req,res)=>{
     //get file path
     //check if its available 
@@ -12,8 +12,7 @@ const uploadVideo = asyncHandler(async (req,res)=>{
     // if yes upload to cloudinary
     //get url,duration
     // store it to database 
-    //return res
-
+    //return res 
     const videoLocalPath = req.files?.video[0].path;
     const thumbnailLocalPath = req.files?.thumbnail[0].path;
     
@@ -46,11 +45,9 @@ const uploadVideo = asyncHandler(async (req,res)=>{
         throw new ApiError(400,"try to upload thumbnail in jpg or png format")
     }
 
-    console.log("CLeard here");
-    const uploadedVideo = await fileUploadTOCloudinary(videoLocalPath,"video1","");
-    const uploadedThumbnail = await fileUploadTOCloudinary(thumbnailLocalPath,"thumbnail1","");
-
-    console.log("cleared here 2")
+    const uploadedVideo = await fileUploadTOCloudinary(videoLocalPath,"video");
+    const uploadedThumbnail = await fileUploadTOCloudinary(thumbnailLocalPath,"thumbnail");
+    
 
     if(!uploadedVideo.url){
         throw new ApiError(400,"video not uploaded");
@@ -58,8 +55,6 @@ const uploadVideo = asyncHandler(async (req,res)=>{
     if(!uploadedThumbnail.url){
         throw new ApiError(400,"thumbnail not uploaded");
     }
-
-    console.log("cleared here 3")
 
 
     const video = await Video.create(
@@ -72,7 +67,6 @@ const uploadVideo = asyncHandler(async (req,res)=>{
             owner: req.user?._id
         }
     ) 
-    console.log("cleared here 4")
     
     return res
     .status(200)
@@ -247,11 +241,62 @@ const updateVideoDetails = asyncHandler(async (req,res)=>{
     )
 })
 
+const deleteVideo = asyncHandler(async (req,res)=>{
+    //get video id
+    //get video and then get cloudinary url ------database query
+    // delete video from clodinary
+    // delete it from databse ------database query
+
+    const {videoId} = req.params;
+ 
+    if(!videoId){
+        throw new ApiError(400, "video id missing");
+    };
+
+    const video = await Video.findById(videoId)
+
+    if(!video){
+        throw new ApiError(400, "video not found or already being deleted");
+    }
+
+    const videoCloudinaryUrl = video.videoFile;
+    const thumbnailCloudinaryUrl = video.thumbnail;
+
+    //deleting video from cloudinary
+    const deletedCloudinaryVideo = await fileDeleteToCloudinary(
+        videoCloudinaryUrl,
+        {resource_type: 'video'}
+        );
+
+    //deleting thumbnail from cloudinary
+    const deletedCloudinaryThumbnail = await fileDeleteToCloudinary(
+        thumbnailCloudinaryUrl,
+        {resource_type: 'image'}
+        );
+    
+    if (deletedCloudinaryVideo.result !== 'ok') {
+        throw new ApiError(400, "video not deleted from cloufinary");
+    }
+
+    if (deletedCloudinaryThumbnail.result !== 'ok') {
+        throw new ApiError(400, "thumbnail not deleted from cloufinary");
+    }
+
+    const deletedVideo = await Video.findByIdAndDelete(video?._id)
+    .select("-videoFile -thumbnail -duration -views -isPublished"); 
+
+    return res.status(200)
+    .json(
+        new ApiResponse(200,deletedVideo,"video deleted successfully")
+    )
+}) 
+
 
 export {
     uploadVideo,
     getAllVideos,
     getVideoById,
-    updateVideoDetails
+    updateVideoDetails,
+    deleteVideo
 
 }

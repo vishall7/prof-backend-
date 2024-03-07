@@ -7,7 +7,7 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET 
   });
 
-const fileUploadTOCloudinary = async (localFilePath,tags,publicId) => {
+const fileUploadTOCloudinary = async (localFilePath,tags) => {
   try {
     if(!localFilePath) return null;
     // Object to store additional options for the upload
@@ -18,15 +18,13 @@ const fileUploadTOCloudinary = async (localFilePath,tags,publicId) => {
     if (tags) {
       uploadOptions.tags = tags;
     }
-
-    // Add public_id to options if provided
-    if (publicId) {
-      uploadOptions.public_id = publicId;
-    }
+    
     // upload file to cloudinary
     const response = await cloudinary.uploader.upload(localFilePath,uploadOptions)
+    
     // unlink after upload
     fs.unlinkSync(localFilePath);
+    
     return response;
   } catch (error) {
     fs.unlinkSync(localFilePath); //removes temp file from server
@@ -34,5 +32,56 @@ const fileUploadTOCloudinary = async (localFilePath,tags,publicId) => {
   }
 }
 
-export {fileUploadTOCloudinary}
+const fileUpadateToCloudinary = async (localFilePath,publicUrl) => {
+  try {
+    if(!localFilePath) return null;
+    
+    const uploadOptions = {
+      resource_type: "auto",
+    };
+    
+    const publicId = publicUrl.match(/\/upload\/v([^/]+)\/([\w\d]+)/)[2];
+
+    uploadOptions.public_id = publicId;
+
+    const response = await cloudinary.uploader.upload(localFilePath,uploadOptions)
+   
+    fs.unlinkSync(localFilePath);
+
+    return response;
+
+  } catch (error) {
+
+    fs.unlinkSync(localFilePath); 
+
+    return null;
+  }
+  
+
+
+}
+
+
+
+const fileDeleteToCloudinary = async (publicUrl,resourceType) => {
+  try {
+
+    if(!publicUrl) return null;
+
+    const publicId = publicUrl.match(/\/upload\/v([^/]+)\/([\w\d]+)/)[2];
+    
+    const response = await cloudinary.uploader.destroy(publicId,resourceType);
+
+    return response;
+
+  } catch (error) {
+      return error.message;
+  }
+}
+
+export {
+  fileUploadTOCloudinary,
+  fileUpadateToCloudinary,
+  fileDeleteToCloudinary
+}
   

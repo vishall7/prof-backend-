@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/APIError.js";
 import { User } from "../models/user.model.js";
-import { fileUploadTOCloudinary } from "../utils/cloudinary.js";
+import { fileUpadateToCloudinary, fileUploadTOCloudinary } from "../utils/cloudinary.js";
 import {ApiResponse} from "../utils/APIResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
@@ -297,11 +297,9 @@ const updateUserAvatar = asyncHandler(async (req,res)=>{
 
     if(!newAvatarPath){
         throw new ApiError(400,"avatar file path not found")
-    }
-             
-    const priviousAvatarPublicId = req.user.avatar.match(/\/upload\/v([^/]+)\/([\w\d]+)/)[2];
-    
-    const updatedAvatar = await fileUploadTOCloudinary(newAvatarPath,priviousAvatarPublicId);
+    }            
+ 
+    const updatedAvatar = await fileUpadateToCloudinary(newAvatarPath,req.user?.avatar);
 
     if (!updatedAvatar.url) {
         throw new ApiError(400,"file upload unsuccessful to cloudinary");
@@ -333,9 +331,7 @@ const updateUserCoverImage = asyncHandler(async (req,res)=>{
         throw new ApiError(400,"cover image file path not found")
     }
 
-    const priviousCoveImagePublicId = req.user.coverImage.match(/\/upload\/v([^/]+)\/([\w\d]+)/)[2];
-
-    const updatedCoverImage = await fileUploadTOCloudinary(newCoverImagePath,priviousCoveImagePublicId);
+    const updatedCoverImage = await fileUpadateToCloudinary(newCoverImagePath,req.user?.coverImage);
 
     if (!updatedCoverImage.url) {
         throw new ApiError(400,"file upload unsuccessful to cloudinary");

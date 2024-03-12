@@ -2,16 +2,13 @@ import { Router } from "express";
 import { deleteVideo, getAllVideos, getVideoById, updateVideoDetails, uploadVideo } from "../controllers/video.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { updateAccountDetails } from "../controllers/user.controller.js";
 
 const router = Router();
 
-router.route("/videoById/:videoId").get(getVideoById)
-
-
-
-
 //safe routes
+
+router.route("/videoById/:videoId").get(verifyJWT,getVideoById)
+
 router.route("/upload-video").post(
     verifyJWT,
     upload.fields(
@@ -29,7 +26,7 @@ router.route("/upload-video").post(
     uploadVideo
 )
 //this routes also safe because it contains user info
-router.route("/get-videos").get(verifyJWT,getAllVideos)
+router.route("/get-videos").get(getAllVideos)
 
 router.route("/update-video-details/:videoId").patch(verifyJWT,updateVideoDetails)
 

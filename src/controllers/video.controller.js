@@ -87,15 +87,7 @@ const getAllVideos = asyncHandler(async (req,res)=>{
         limit: parseInt(limit),
     };
 
-    const allVideos = await Video.aggregate(
-        [
-            {
-                $match: {
-                    owner: new mongoose.Types.ObjectId(req.user._id)
-                }
-            }
-        ]
-    )
+    const allVideos = await Video.find({})
     
     if(!allVideos.length){
         throw new ApiError(400,"videos not found") 
@@ -114,7 +106,7 @@ const getAllVideos = asyncHandler(async (req,res)=>{
 const getVideoById = asyncHandler(async (req,res)=>{
 
     const {videoId} = req.params;
-    console.log(videoId)
+    
     if(!videoId?.trim()){
         throw new ApiError(400,"video id is missing") 
     }
@@ -154,6 +146,14 @@ const getVideoById = asyncHandler(async (req,res)=>{
                 
             },
             {
+                $lookup:{
+                    from : 'comments',
+                    localField: '_id',
+                    foreignField: 'video',
+                    as: 'comments',
+                }
+            },
+            {
                 $addFields: {
                     owner:{
                         $first: "$owner"
@@ -163,16 +163,20 @@ const getVideoById = asyncHandler(async (req,res)=>{
                     },
                     isLiked: {
                         $cond: {
-                            if: {$in: ["$owner._id","$likes.likeBy"]},
+                            if: {$in: [req.user?._id, "$likes.likeBy"]},
                             then: true,
                             else: false
                         }
+                    },
+                    commentCount: {
+                        $size: "$comments"
                     }                   
                 }
             },
             {
                 $project: {
-                    likes: 0
+                    likes: 0,
+                    comments: 0
                 } 
             }
 

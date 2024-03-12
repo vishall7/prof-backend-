@@ -10,7 +10,7 @@ cloudinary.config({
 const fileUploadTOCloudinary = async (localFilePath,tags) => {
   try {
     if(!localFilePath) return null;
-    // Object to store additional options for the upload
+    
     const uploadOptions = {
       resource_type: "auto",
     };
@@ -24,7 +24,7 @@ const fileUploadTOCloudinary = async (localFilePath,tags) => {
     
     // unlink after upload
     fs.unlinkSync(localFilePath);
-    
+
     return response;
   } catch (error) {
     fs.unlinkSync(localFilePath); //removes temp file from server

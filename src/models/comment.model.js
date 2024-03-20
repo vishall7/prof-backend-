@@ -10,12 +10,15 @@ const commentSchema = new Schema(
         video: {
             type: Schema.Types.ObjectId,
             ref: "Video",
-            required: true
         },
         commentBy: {
             type: Schema.Types.ObjectId,
             ref: "User",
             required: true 
+        },
+        parentComment: {
+            type: Schema.Types.ObjectId,
+            ref:"Comment"
         }
     },
     {

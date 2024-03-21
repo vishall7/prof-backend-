@@ -11,7 +11,8 @@ const playListSchema = new Schema(
         },
         description: {
             type: String,
-            required: true,
+            trim: true,
+            lowercase: true           
         },
         owner: {
             type: Schema.Types.ObjectId,

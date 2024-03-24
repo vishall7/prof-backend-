@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import connectDB from "./db/connect.js";
 import {app} from "./app.js";
+import { asyncHandler } from "./utils/asyncHandler.js";
 
 dotenv.config({
     path: "./env"
@@ -23,3 +24,17 @@ const start = async ()=>{
 }
 
 start()
+
+// asyncHandler(async ()=>{
+//     try {
+//         await connectDB();
+//         app.on('error',(err)=>{
+//             console.log("ERROR: ",err)
+//         });
+//         app.listen(port,()=>{
+//             console.log(`server is connected to port: ${port}`)
+//         });  
+//     } catch (error) {
+//         console.error("Some error is occured ",error); 
+//     }
+// });

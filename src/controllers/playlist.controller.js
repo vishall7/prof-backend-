@@ -303,6 +303,52 @@ const getUserPlaylists = asyncHandler(async (req,res)=>{
     )
 })
 
+const updatePlaylist = asyncHandler(async (req,res)=>{
+    //get playlist id
+    //check if exists
+    //get title and description from req.body
+    //use findByIdAndUpdate
+
+    const {playlistId} = req.params;
+    const {name,description} = req.body;
+
+    if (!playlistId) {
+        throw new ApiError(400,"playlist id missing")        
+    }    
+
+    const updateFeilds = {};
+    
+    if(name?.trim() === "" || name?.length <= 4){
+        throw new ApiError(400,"please provide suitable title")
+    }
+
+    if(name){
+        updateFeilds.name = name;
+    }
+
+    if(description){
+        updateFeilds.description = description;
+    }   
+
+    const playlistExists = await PlayList.findByIdAndUpdate(
+        playlistId,
+        {
+            $set: updateFeilds
+        },
+        {new: true}
+    );
+
+    if(!playlistExists){
+        throw new ApiError(400,"playlist not found")
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200,playlistExists,"playlist info updated")
+    )
+}) 
+
 const deletePlaylist = asyncHandler(async (req,res)=>{
     //get playlist id
     //check if it exists
@@ -340,5 +386,6 @@ export {
     getPlaylistVideos,
     removeVideoFromPlaylist,
     getUserPlaylists,
-    deletePlaylist
+    deletePlaylist,
+    updatePlaylist
 }
